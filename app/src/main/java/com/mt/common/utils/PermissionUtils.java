@@ -7,7 +7,8 @@ import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.mt.permissionlibray.common.PermissionListener;
+
+import com.mt.common.common.listener.PermissionListener;
 
 import java.util.ArrayList;
 import java.util.List;
