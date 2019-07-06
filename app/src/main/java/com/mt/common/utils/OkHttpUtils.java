@@ -89,37 +89,27 @@ public class OkHttpUtils {
 
     /**
      * 多baseurl,多https证书
-     * @param api_type
      * @return
      */
-    public static OkHttpClient.Builder getBuilder(int api_type){
+    public static OkHttpClient.Builder getBuilder(int sslcertRawResId){
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS);//设置连接超时间
         builder.writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS); //写操作超时时间
         builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS); //读操作超时时间
         builder.retryOnConnectionFailure(true); //错误重连
-//        builder.sslSocketFactory(createSslContext(BaseApplication.getContext(),api_type).getSocketFactory());
+        //0表示不需要https证书，其他的话，就是该证书对应的raw文件夹里面的resID
+        if(sslcertRawResId==0){
+            TrustAllManager trustAllManager = new TrustAllManager();
+            SSLSocketFactory sslSocketFactory=OkHttpUtils.createTrustAllSSLFactory(trustAllManager);
+            builder.sslSocketFactory(sslSocketFactory,trustAllManager); //QA测试的时候用这个，全信任模式
+        }else{
+            builder.sslSocketFactory(createSslContext(BaseApplication.getContext(),sslcertRawResId).getSocketFactory());
+        }
+
         builder.hostnameVerifier((hostname, session) -> true);
-        builder.addInterceptor(new MoreBaseUrlInterceptor()); //多baseUrl拦截
+//        builder.addInterceptor(new MoreBaseUrlInterceptor()); //多baseUrl拦截
         builder.addInterceptor(getHttpLoggingInterceptor()); //请求日志拦截
         builder.protocols(Collections.singletonList(Protocol.HTTP_1_1)); //添加http协议
-        //添加https头部参数
-        Interceptor headInterceptor = new Interceptor() {
-            @Override
-            public Response intercept(Chain chain) throws IOException {
-                Request request = chain.request();
-                Request.Builder requestBuilder = request.newBuilder()
-                        .addHeader("Accept-Encoding", "gzip")
-                        .addHeader("Accept", "application/json")
-                        .addHeader("Content-Type", "application/json; charset=utf-8")
-                        .method(request.method(), request.body());
-                requestBuilder.addHeader("Authorization",""+SharePreferencesUtils.getInstance().get("token","error").toString()); //携带token
-                return chain.proceed(request);
-            }
-        };
-
-        //多baseUrl拦截器
-        builder.addInterceptor(headInterceptor);
         return builder;
     }
 
@@ -135,28 +125,12 @@ public class OkHttpUtils {
         builder.retryOnConnectionFailure(true); //错误重连
         builder.sslSocketFactory(sslSocketFactory,trustAllManager); //QA测试的时候用这个，全信任模式
         builder.hostnameVerifier((hostname, session) -> true);
-        builder.addInterceptor(new MoreBaseUrlInterceptor()); //多baseUrl拦截
+//        builder.addInterceptor(new MoreBaseUrlInterceptor()); //多baseUrl拦截
         builder.addInterceptor(getHttpLoggingInterceptor()); //请求日志拦截
         builder.protocols(Collections.singletonList(Protocol.HTTP_1_1));
-        //添加https头部参数
-        Interceptor headInterceptor = new Interceptor() {
-            @Override
-            public Response intercept(Chain chain) throws IOException {
-                Request request = chain.request();
-                Request.Builder requestBuilder = request.newBuilder()
-                        .addHeader("Accept-Encoding", "gzip")
-                        .addHeader("Accept", "application/json")
-                        .addHeader("Content-Type", "application/json; charset=utf-8")
-                        .method(request.method(), request.body());
-                requestBuilder.addHeader("Authorization",""+SharePreferencesUtils.getInstance().get("token","error").toString()); //携带token
-                return chain.proceed(request);
-            }
-        };
-
-        //多baseUrl拦截器
-        builder.addInterceptor(headInterceptor);
         return builder;
     }
+
     //配置连接超时时间，缓存，拦截器
 
     public static SSLSocketFactory createTrustAllSSLFactory(TrustAllManager trustAllManager) {
@@ -177,29 +151,11 @@ public class OkHttpUtils {
 
 
 
-//    public static SSLContext createSslContext(Context context, int cer_type){
-//        SSLContext sslContext = null;
-//        switch (cer_type){
-//            case 1:
-//                sslContext = getPfx(context.getResources().openRawResource(R.raw.mac_mma),1);
-//                Log.i("cert_type","mac_mma");
-//                break;
-//            case 2:
-//                sslContext = getPfx(context.getResources().openRawResource(R.raw.wpm_mma),2);
-//                Log.i("cert_type","wpm_mma");
-//                break;
-//            case 3:
-//                sslContext = getPfx(context.getResources().openRawResource(R.raw.mac_gcm),3);
-//                Log.i("cert_type","mma_wm_spv");
-//                break;
-//            case 4:
-//                sslContext = getPfx(context.getResources().openRawResource(R.raw.wpm_gcm),4);
-//                Log.i("cert_type","mma_wp_spv");
-//                break;
-//
-//        }
-//        return sslContext;
-//    }
+    public static SSLContext createSslContext(Context context, int sslcertRawResId){
+        SSLContext sslContext = null;
+        sslContext = getPfx(context.getResources().openRawResource(sslcertRawResId),1);
+        return sslContext;
+    }
 
 //    public static void changeApiHostFromWifiIP(Context context){
 //        String contect_ip = Tools.getConnectWifiIP(context);

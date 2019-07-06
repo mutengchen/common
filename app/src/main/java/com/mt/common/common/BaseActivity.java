@@ -9,6 +9,12 @@ import android.os.Bundle;
  * Created by cmt on 2019/7/3
  */
 public abstract class BaseActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setPermission();
+        setNetWorkChangeReceiver();
+    }
 
     /**
      * 凡是继承该类的activity，app字体大小都不受系统字体大小的影响
@@ -35,6 +41,6 @@ public abstract class BaseActivity extends Activity {
         super.onConfigurationChanged(newConfig);
     }
 
-    public abstract void setPermission(); //设置权限
-    public abstract void setNetWorkChangeReceiver();//设置全局的网络监听
+    protected abstract void setPermission(); //设置权限
+    protected abstract void setNetWorkChangeReceiver();//设置全局的网络监听
 }

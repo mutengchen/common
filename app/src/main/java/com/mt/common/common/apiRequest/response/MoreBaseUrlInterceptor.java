@@ -2,7 +2,10 @@ package com.mt.common.common.apiRequest.response;
 
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -13,6 +16,7 @@ import okhttp3.Response;
  * 多host api 切换
  */
 public class MoreBaseUrlInterceptor implements Interceptor {
+    HashMap<String,String> hostList;
     @Override
     public Response intercept(Chain chain) throws IOException {
         //获取原始的originalRequest
@@ -28,16 +32,17 @@ public class MoreBaseUrlInterceptor implements Interceptor {
             builder.removeHeader("host");
             //获取头信息中配置的value,如：manage或者mdffx
             String urlname = urlnameList.get(0);
-            HttpUrl baseURL=null;
-            //根据头信息中配置的value,来匹配新的base_url地址
-//           if("mra_web".equals(urlname)){
-//                baseURL = HttpUrl.parse(Api.API_DEFAULT);
-//            }else if("mra_gcm".equals(urlname)){
-//                baseURL = HttpUrl.parse(Api.GCM_URL);
-//            }
-//            else {
-//                baseURL = HttpUrl.parse(Api.API_DEFAULT);
-//            }
+            HttpUrl baseURL=HttpUrl.parse("xxxxx");
+            //遍历hashMap
+            Iterator iter = this.hostList.entrySet().iterator();
+            while (iter.hasNext()) {
+                java.util.Map.Entry entry = (Map.Entry) iter.next();
+                Object key = entry.getKey();
+                Object val = entry.getValue();
+                if(key.equals(urlname)){
+                    baseURL = HttpUrl.parse(val.toString());
+                }
+            }
             //重建新的HttpUrl，需要重新设置的url部分
             HttpUrl newHttpUrl = oldUrl.newBuilder()
                     .scheme(baseURL.scheme())//http协议如：http或者https
@@ -51,5 +56,9 @@ public class MoreBaseUrlInterceptor implements Interceptor {
             return chain.proceed(originalRequest);
         }
 
+    }
+
+    public MoreBaseUrlInterceptor(HashMap<String, String> hostList) {
+        this.hostList = hostList;
     }
 }
